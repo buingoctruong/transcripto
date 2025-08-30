@@ -3,64 +3,69 @@ document.addEventListener("DOMContentLoaded", () => {
   // Get references to our UI elements
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
+  const clearButton = document.getElementById("clearButton");
   const outputDiv = document.getElementById("output");
+  const infoText = document.getElementById("info-text");
 
   // --- Web Speech API Setup ---
-  // The Web Speech API is experimental and might need a vendor prefix
   window.SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  // Check if the API is supported by the user's browser
   if (!window.SpeechRecognition) {
     outputDiv.textContent =
       "Speech Recognition is not supported in this browser.";
+    infoText.classList.add("hidden"); // Hide info text if API is not supported
     return;
   }
 
-  // Create a new SpeechRecognition instance
   const recognition = new SpeechRecognition();
-  recognition.lang = "en-US"; // Set the language for transcription
-  recognition.interimResults = true; // Get real-time, non-final results
-  recognition.continuous = true; // Keep listening after a pause
+  recognition.lang = "en-US";
+  recognition.interimResults = true;
+  recognition.continuous = true;
 
   // --- State Variables ---
-  let finalTranscript = ""; // Stores the final, confirmed transcription
-  let timerId; // Holds the ID for our 5-minute timer
+  let finalTranscript = "";
+  let timerId;
   const maxTimeInMinutes = 5;
 
-  // --- Event Handlers for Speech Recognition ---
+  // --- Helper Functions for UI State Management ---
+  function updateUI(isListening) {
+    if (isListening) {
+      startButton.classList.add("hidden");
+      stopButton.classList.remove("hidden");
+      outputDiv.classList.add("listening"); // Add the animation class
+      infoText.textContent = "Listening...";
+    } else {
+      startButton.classList.remove("hidden");
+      stopButton.classList.add("hidden");
+      outputDiv.classList.remove("listening"); // Remove the animation class
+      infoText.textContent = `Session limited to ${maxTimeInMinutes} minutes.`;
+    }
+  }
 
-  // Called whenever new transcription results are available
+  // --- Event Handlers for Speech Recognition ---
   recognition.onresult = (event) => {
     let interimTranscript = "";
-    // Iterate through all the results from the event
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       const transcript = event.results[i][0].transcript;
       if (event.results[i].isFinal) {
-        // If the result is final, append it to our final transcript
-        finalTranscript += transcript + " "; // Add a space for readability
+        finalTranscript += transcript + " ";
       } else {
-        // If it's an interim result, store it temporarily
         interimTranscript += transcript;
       }
     }
-    // Update the UI with both the final and current interim text
     outputDiv.textContent = finalTranscript + interimTranscript;
   };
 
-  // Called when the recognition service disconnects
   recognition.onend = () => {
     console.log("Speech recognition service ended.");
-    // Ensure button states are correct after stopping
-    startButton.style.display = "block";
-    stopButton.style.display = "none";
-    // Clear the timer if it's still running
+    updateUI(false);
     if (timerId) {
       clearTimeout(timerId);
+      timerId = null;
     }
   };
 
-  // Called when an error occurs
   recognition.onerror = (event) => {
     console.error("Speech recognition error: ", event.error);
     if (event.error === "no-speech") {
@@ -69,24 +74,17 @@ document.addEventListener("DOMContentLoaded", () => {
       outputDiv.textContent =
         "Microphone access denied. Please enable it in your browser settings.";
     }
-    // Ensure button states are correct after an error
-    startButton.style.display = "block";
-    stopButton.style.display = "none";
+    updateUI(false);
   };
 
   // --- Button Event Listeners ---
-
-  // Start button click handler
   startButton.addEventListener("click", () => {
     finalTranscript = "";
     outputDiv.textContent = "Listening...";
     try {
-      // Start the recognition service
       recognition.start();
-      startButton.style.display = "none";
-      stopButton.style.display = "block";
+      updateUI(true);
 
-      // Set a timer to automatically stop the recording after 5 minutes
       const maxTimeMilliseconds = maxTimeInMinutes * 60 * 1000;
       timerId = setTimeout(() => {
         recognition.stop();
@@ -101,20 +99,22 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error starting recognition:", e);
       outputDiv.textContent =
         "An error occurred. Please try reloading the extension.";
+      updateUI(false);
     }
   });
 
-  // Stop button click handler (manual stop)
   stopButton.addEventListener("click", () => {
-    // Stop the recognition service
     recognition.stop();
-    // Clear the timer since the user manually stopped
-    if (timerId) {
-      clearTimeout(timerId);
-      timerId = null;
-    }
     outputDiv.textContent = finalTranscript;
-    startButton.style.display = "block";
-    stopButton.style.display = "none";
+    updateUI(false);
+  });
+
+  clearButton.addEventListener("click", () => {
+    if (recognition.running) {
+      recognition.stop();
+    }
+    finalTranscript = "";
+    outputDiv.textContent = "The transcribed text will appear here.";
+    updateUI(false);
   });
 });
