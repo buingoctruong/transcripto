@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
       recognition.stop();
     }
     finalTranscript = "";
-    outputDiv.textContent = "The transcribed text will appear here.";
+    outputDiv.textContent = "Your transcription will appear here.";
     updateUI(false);
   });
 });
