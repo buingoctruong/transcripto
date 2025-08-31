@@ -3,7 +3,6 @@
   "name": "Transcripto",
   "version": "1.0",
   "description": "A lightweight Chrome extension that records your voice and instantly converts it into text.",
-  "permissions": ["activeTab", "storage"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
