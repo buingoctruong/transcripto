@@ -11,7 +11,7 @@ To solve this, I created a Chrome extension that:
 
 ## 🌐 Extension
 
-Find and add the **_Transcripto_** Extension to your Chrome [here]()
+Find and add the **_Transcripto_** Extension to your Chrome [here](https://chromewebstore.google.com/detail/transcripto/dlafapkfpflnbfpnadkbjlakmgegkcff?authuser=0&hl=en)
 
 🚀 Features
 
